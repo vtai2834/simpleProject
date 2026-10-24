@@ -3,59 +3,54 @@
 Hướng dẫn cho Claude khi làm việc trong repo này.
 
 ## Dự án là gì
-Web mini-game 20/10 cho nhóm bạn gồm 5 người phụ nữ. Chủ repo đã chuẩn bị 5 lọ hoa (màu sắc, kiểu dáng khác nhau). Để công bằng, mỗi người vào link, gõ tên, chơi **gacha capsule** và nhận ngẫu nhiên 1 lọ hoa. Kết quả hiện kèm hiệu ứng pháo giấy / cánh hoa rơi và một lời chúc riêng.
+Web mini-game 20/10 cho nhóm 5 người phụ nữ. Chủ repo đã chuẩn bị 5 lọ hoa. Mỗi người mở link trên điện thoại, gõ tên, chơi **gacha capsule** và nhận ngẫu nhiên 1 lọ hoa kèm pháo giấy, cánh hoa rơi và lời chúc có chèn tên. Admin đăng nhập (nút 🔒 góc trên phải) để xem ai nhận gì, sửa quà, sửa lời chúc, reset.
 
-## Yêu cầu đã chốt
-- Mỗi người mở link trên điện thoại của mình (**mỗi người 1 link, chơi từ xa**), nên cần **DB online** dùng chung.
-- Cơ chế chơi: **gacha / máy gắp capsule**. Gõ tên → bấm nút → capsule rơi ra → mở ra lọ hoa → pháo giấy + cánh hoa rơi + lời chúc riêng.
-- Nhiều animation, đẹp, theo chủ đề 20/10.
-- Stack: **Vite + React**. Chọn cách setup đơn giản nhất.
-- Mobile-first.
-- Ngôn ngữ giao diện: tiếng Việt.
+Spec: `docs/superpowers/specs/2026-10-24-gacha-20-10-design.md`. Plan: `docs/superpowers/plans/2026-10-24-gacha-20-10.md`. Checklist kiểm tay: `docs/CHECKLIST.md`.
+
+## Stack và lệnh
+Vite + React (JS), framer-motion, canvas-confetti, Firebase (Firestore + Auth email/password), Vitest.
+- `npm run dev` · `npm test` (unit, jsdom) · `npm run build`
+- `npm run test:emu`: test Firestore Rules và bốc đồng thời với Emulator, **cần Java**.
+- Cấu hình Firebase trong `.env.local` (`VITE_FIREBASE_*`, `VITE_ADMIN_EMAIL`), không commit.
 
 ## Quy tắc nghiệp vụ (quan trọng)
-- Đây là bài toán **hoán vị 5 phần tử**: mỗi lọ hoa chỉ thuộc đúng 1 người, **không được trùng**.
-- Việc bốc thăm phải **atomic** (dùng transaction), vì 2 người có thể bấm cùng lúc.
-- **Idempotent**: một người đã bốc rồi thì mở lại / F5 / bấm lại chỉ hiện lại kết quả cũ, không bốc lại.
-- Chuẩn hóa tên khi so khớp (trim, bỏ dấu, lowercase) để "Lan" và "lan " là cùng một người.
-- Lời chúc là template chèn tên người chơi (xem `src/data/wishes.js`).
+- Mỗi lọ hoa chỉ thuộc đúng 1 người; bốc thăm **atomic** bằng `runTransaction` trên `game/state`.
+- **Idempotent**: cùng `deviceId` (localStorage `gacha2010.deviceId`) hoặc cùng tên chuẩn hóa thì trả lại kết quả cũ.
+- Tên chuẩn hóa (`normalizeName`): trim, bỏ dấu, lowercase, gộp khoảng trắng. Tên hiển thị tối đa 30 ký tự.
+- Lời chúc là template có `{name}`, được **chốt tại lúc bốc** (lưu trong assignment).
+- Người chơi tự gõ tên, không có danh sách cố định. Người thứ 6 trở đi thấy "hết quà".
 
-## Quyết định kỹ thuật (đề xuất, chờ chủ repo xác nhận)
-- **Backend: Firebase Firestore** (không cần server, gói Spark miễn phí, SDK có transaction).
-- Do transaction phía client không query được, dùng **1 document duy nhất** `game/state`:
-  - `remaining: string[]` — id các lọ hoa chưa ai bốc
-  - `assignments: { [normalizedName]: { name, prizeId, drawnAt } }`
-- Hàm bốc: `runTransaction` → nếu tên đã có trong `assignments` thì trả về kết quả cũ; ngược lại chọn ngẫu nhiên 1 id trong `remaining`, xóa nó khỏi `remaining`, ghi vào `assignments`.
-- Animation: CSS/SVG + `framer-motion` cho capsule; `canvas-confetti` cho pháo giấy (dùng `shapeFromText` với emoji 🌸, bật `disableForReducedMotion`).
-- Cấu hình Firebase đọc từ biến môi trường `VITE_FIREBASE_*` trong `.env.local` (không commit).
-- Deploy: Vercel hoặc Firebase Hosting (chọn khi tới bước đó).
+## Dữ liệu Firestore
+```
+prizes/{id}      { name, imageUrl, order }
+config/wishes    { templates: string[] }
+game/state       { remaining: string[], assignments: {[normName]: {name, prizeId, wish, drawnAt}},
+                   devices: {[deviceId]: normName}, lastDraw?: {key, deviceId, prizeId} }
+```
+- `lastDraw` do người chơi ghi kèm mỗi lần bốc để Firestore Rules đối chiếu (Rules không lấy được phần tử của Set). `resetGame` xóa nó.
+- Rules (`firestore.rules`): `prizes`, `config` chỉ admin ghi; người chơi chỉ được `update` `game/state` khi đúng 1 quà bị bỏ khỏi `remaining` và thêm đúng 1 assignment + 1 device. Email admin hard-code trong rules, nhớ đổi.
 
-## Cấu trúc dự kiến
+## Cấu trúc
 ```
 src/
-  components/   # GachaMachine, Capsule, PrizeReveal, NameForm, PetalRain...
-  data/         # prizes.js (5 lọ hoa), wishes.js (lời chúc theo tên)
-  lib/          # firebase.js, draw.js (transaction), normalizeName.js
-  App.jsx
-public/prizes/  # ảnh 5 lọ hoa
+  components/   NameForm, ConfirmName, GachaMachine, Capsule, PrizeReveal, StatusScreens, PetalRain
+    admin/      AdminButton, LoginModal, AdminPanel, PlayersTab, PrizesTab, WishesTab
+  data/         defaultPrizes.js, defaultWishes.js (chỉ để seed lần đầu)
+  lib/          computeDraw (thuần), draw (transaction), game (init/reset/CRUD quà), gameState,
+                normalizeName, wish, deviceId, celebrate, firebase
+  hooks/        useGameState, usePrizes, useWishes, useAuth, useDoc
+  App.jsx       điều phối màn hình: name → confirm → gacha → result (+ soldout/notOpen/error)
+tests/          test cần Emulator (rules, draw đồng thời)
 ```
 
 ## Giao diện
-Hồng pastel + kem, đỏ đô làm màu nhấn. Font viết tay cho tiêu đề. Nền có cánh hoa rơi chậm. Bo góc lớn, nhiều khoảng trắng.
+Hồng pastel + kem, đỏ đô làm màu nhấn, font Pacifico cho tiêu đề, mobile-first, tôn trọng `prefers-reduced-motion`.
 
 ## Quy ước làm việc
 - Trả lời và comment bằng tiếng Việt, tên biến / hàm bằng tiếng Anh.
-- Quy trình: brainstorming → spec → plan → code. **Chưa scaffold code** cho tới khi chủ repo duyệt thiết kế.
-- Giữ đơn giản (YAGNI): không thêm đăng nhập, admin panel, bảng xếp hạng.
+- TDD: viết test trước, thấy fail rồi mới code.
+- YAGNI: không âm thanh, bảng xếp hạng, upload ảnh, đa admin.
 - Không commit `.env.local` hay khóa Firebase.
 
-## Quyết định đã chốt với chủ repo
-- **Không có danh sách tên cố định**: người chơi tự gõ tên lúc vào web. Ai gõ tên nào cũng được.
-- Lời chúc là **template có chỗ chèn tên** (ví dụ `"{name} ơi, chúc bạn ..."`), chọn ngẫu nhiên / theo lọ hoa và thay `{name}` bằng tên người chơi đã nhập.
-- 5 lọ hoa (tên + link ảnh) là **hằng số gán cứng** trong `src/data/prizes.js`, chủ repo sẽ tự sửa tên / link ảnh sau.
-- Backend: **Firebase Firestore** (đã xác nhận).
-
-## Rủi ro đã biết khi cho nhập tên tự do
-- Người thứ 6 trở đi sẽ thấy "đã hết quà".
-- Gõ sai / khác tên có thể bốc lại: giảm bằng cách lưu kết quả theo cả `deviceId` (localStorage), một thiết bị chỉ bốc một lần.
-- Reset trò chơi: sửa `game/state` trong Firebase console (không làm admin UI).
+## Trạng thái
+Code xong theo plan. **Chưa được kiểm chứng:** `npm run test:emu` (máy dev chưa có Java) và giao diện/animation trên trình duyệt và điện thoại thật.
