@@ -5,6 +5,7 @@ import ConfirmName from './components/ConfirmName.jsx'
 import GachaMachine from './components/GachaMachine.jsx'
 import PrizeReveal from './components/PrizeReveal.jsx'
 import StatusScreens from './components/StatusScreens.jsx'
+import AdminButton from './components/admin/AdminButton.jsx'
 import { draw } from './lib/draw.js'
 import { getDeviceId } from './lib/deviceId.js'
 import { useGameState } from './hooks/useGameState.js'
@@ -79,6 +80,7 @@ export default function App() {
   return (
     <div className="app">
       <PetalRain />
+      <AdminButton />
       <main className="stage">
         {closed && <StatusScreens kind="notOpen" />}
         {!closed && screen === 'name' && (

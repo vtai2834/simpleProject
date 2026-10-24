@@ -7,6 +7,9 @@ import { useGameState } from './hooks/useGameState.js'
 vi.mock('./lib/draw.js', () => ({ draw: vi.fn() }))
 vi.mock('./lib/celebrate.js', () => ({ celebrate: vi.fn() }))
 vi.mock('./lib/deviceId.js', () => ({ getDeviceId: () => 'dev1' }))
+vi.mock('./hooks/useAuth.js', () => ({
+  useAuth: () => ({ user: null, isAdmin: false, loading: false, login: vi.fn(), logout: vi.fn() }),
+}))
 vi.mock('./hooks/useGameState.js', () => ({ useGameState: vi.fn() }))
 vi.mock('./hooks/usePrizes.js', () => ({
   usePrizes: () => ({ data: [{ id: 'p1', name: 'Lọ hồng', imageUrl: '' }], loading: false }),
