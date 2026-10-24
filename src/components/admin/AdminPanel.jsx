@@ -3,6 +3,8 @@ import { initGame, resetGame } from '../../lib/game.js'
 import { useGameState } from '../../hooks/useGameState.js'
 import { usePrizes } from '../../hooks/usePrizes.js'
 import PlayersTab from './PlayersTab.jsx'
+import PrizesTab from './PrizesTab.jsx'
+import WishesTab from './WishesTab.jsx'
 
 const TABS = [
   { id: 'players', label: 'Người chơi' },
@@ -60,8 +62,8 @@ export default function AdminPanel({ onClose, onLogout }) {
 
         <div className="admin-body">
           {tab === 'players' && <PlayersTab game={game.data} prizes={prizes.data} />}
-          {tab === 'prizes' && <p className="admin-empty">Đang cập nhật…</p>}
-          {tab === 'wishes' && <p className="admin-empty">Đang cập nhật…</p>}
+          {tab === 'prizes' && <PrizesTab />}
+          {tab === 'wishes' && <WishesTab />}
         </div>
 
         <footer className="admin-foot">
