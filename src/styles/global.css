@@ -215,7 +215,7 @@ body {
   width: 150vmax;
   height: 150vmax;
   margin: -75vmax 0 0 -75vmax;
-  z-index: 2;
+  z-index: -1; /* nằm sau thẻ quà (trong stacking context của .stage), không đè lên ảnh */
   pointer-events: none;
   background: repeating-conic-gradient(from 0deg, rgba(255, 210, 122, 0.22) 0deg 7deg, transparent 7deg 20deg);
   -webkit-mask: radial-gradient(circle, #000 0%, transparent 38%);
@@ -224,13 +224,19 @@ body {
 }
 @keyframes rotate { to { transform: rotate(360deg); } }
 .flash-in { position: fixed; inset: 0; z-index: 30; background: #fff; pointer-events: none; }
-.reveal { gap: 12px; transform-style: preserve-3d; will-change: transform; }
+.reveal {
+  gap: 12px;
+  transform-style: preserve-3d;
+  will-change: transform;
+  /* thẻ đục hơn để ảnh và chữ rõ nét, không bị chùm tia sáng xuyên qua */
+  background: linear-gradient(160deg, rgba(48, 14, 70, 0.9), rgba(22, 6, 36, 0.92));
+}
 .prize-frame {
   position: relative;
-  width: 232px;
-  height: 232px;
+  width: 264px;
+  height: 264px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.35), rgba(255, 77, 141, 0.18));
+  background: #1a0a2a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -246,7 +252,7 @@ body {
   border: 2px dashed rgba(255, 210, 122, 0.6);
   animation: rotate 18s linear infinite;
 }
-.prize-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.prize-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; opacity: 1; position: relative; z-index: 1; }
 .prize-placeholder { font-size: 96px; }
 .wish { margin: 6px 0 0; font-size: 1.08rem; line-height: 1.65; color: #fff1f7; transform: translateZ(25px); }
 .wish .w { display: inline-block; margin-right: 0.28em; }
