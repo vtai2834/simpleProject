@@ -3,10 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Đổi email này thành VITE_ADMIN_EMAIL của bạn trước khi deploy
+    // Đổi chuỗi này thành UID của tài khoản admin (Firebase Console → Authentication → Users → cột User UID).
+    // Dùng UID thay vì email vì email chưa xác minh có thể bị người lạ đăng ký trùng.
+    // Còn giữ nguyên placeholder thì không ai có quyền admin (an toàn mặc định).
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email == 'admin@example.com';
+        && request.auth.uid == 'REPLACE_WITH_ADMIN_UID';
     }
 
     // Người chơi (chưa đăng nhập) chỉ được bốc đúng 1 quà mỗi lần ghi.
@@ -18,6 +20,13 @@ service cloud.firestore {
       return after.keys().hasOnly(['remaining', 'assignments', 'devices', 'lastDraw'])
         && after.keys().hasAll(['remaining', 'assignments', 'devices', 'lastDraw'])
         && d.keys().hasOnly(['key', 'deviceId', 'prizeId'])
+        && d.key is string && d.key.size() > 0 && d.key.size() <= 60
+        && d.deviceId is string && d.deviceId.size() > 0 && d.deviceId.size() <= 64
+        && d.prizeId is string
+        // giới hạn kích thước để không ai làm phình document quá 1MB
+        && after.assignments[d.key].name is string && after.assignments[d.key].name.size() <= 30
+        && after.assignments[d.key].wish is string && after.assignments[d.key].wish.size() <= 500
+        && after.assignments[d.key].drawnAt is number
         // assignments: thêm đúng 1 khóa d.key, không sửa khóa cũ
         && after.assignments.diff(before.assignments).affectedKeys() == [d.key].toSet()
         && after.assignments.diff(before.assignments).addedKeys() == [d.key].toSet()

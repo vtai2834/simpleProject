@@ -28,7 +28,7 @@ game/state       { remaining: string[], assignments: {[normName]: {name, prizeId
                    devices: {[deviceId]: normName}, lastDraw?: {key, deviceId, prizeId} }
 ```
 - `lastDraw` do người chơi ghi kèm mỗi lần bốc để Firestore Rules đối chiếu (Rules không lấy được phần tử của Set). `resetGame` xóa nó.
-- Rules (`firestore.rules`): `prizes`, `config` chỉ admin ghi; người chơi chỉ được `update` `game/state` khi đúng 1 quà bị bỏ khỏi `remaining` và thêm đúng 1 assignment + 1 device. Email admin hard-code trong rules, nhớ đổi.
+- Rules (`firestore.rules`): `prizes`, `config` chỉ admin ghi; người chơi chỉ được `update` `game/state` khi đúng 1 quà bị bỏ khỏi `remaining` và thêm đúng 1 assignment + 1 device. Admin xác định bằng **UID** hard-code trong rules (`REPLACE_WITH_ADMIN_UID`, phải đổi trước khi deploy); `VITE_ADMIN_EMAIL` chỉ để ẩn/hiện UI. Rules giới hạn `name <= 30`, `wish <= 500`, `drawnAt` là số. Giới hạn đã biết: quà được chọn ở client nên người cố tình vẫn chọn được quà (cần Cloud Function mới chặn hẳn).
 
 ## Cấu trúc
 ```

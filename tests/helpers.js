@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing'
 
-export const ADMIN_EMAIL = 'admin@example.com' // phải trùng email trong firestore.rules
+export const ADMIN_UID = 'REPLACE_WITH_ADMIN_UID' // phải trùng UID trong firestore.rules
 export const PROJECT_ID = 'demo-gacha-2010'
 
 export async function makeEnv() {

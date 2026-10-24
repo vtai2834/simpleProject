@@ -27,8 +27,9 @@ Lệnh khác: `npm test` (unit test), `npm run build`, `npm run test:emu` (cần
    `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`.
 3. **Build → Firestore Database → Create database** (chế độ production).
 4. **Build → Authentication → Get started** → bật **Email/Password**.
-5. Authentication → Users → **Add user** (email + mật khẩu admin). Email này điền vào `VITE_ADMIN_EMAIL` trong `.env.local`.
-6. Mở `firestore.rules`, đổi `'admin@example.com'` thành email admin của bạn.
+5. Authentication → Users → **Add user** (email + mật khẩu admin). Email này điền vào `VITE_ADMIN_EMAIL` trong `.env.local`. Sau khi tạo, copy cột **User UID** của tài khoản đó.
+6. Mở `firestore.rules`, đổi `'REPLACE_WITH_ADMIN_UID'` thành UID vừa copy (và sửa cùng giá trị trong `tests/helpers.js` nếu chạy test emulator). **Chưa đổi thì không ai có quyền admin.**
+   Rồi vào Authentication → Settings → **User actions** → bỏ tick **Enable create (sign up)** để người lạ không tự đăng ký tài khoản.
 7. Deploy rules:
    ```bash
    npx firebase login
@@ -55,6 +56,7 @@ Nhớ khai báo các biến `VITE_*` trong cài đặt của nơi host (Vercel: 
 `npm run test:emu` kiểm tra Firestore Rules và việc bốc đồng thời. Cần cài **Java (JDK 11+)** để chạy emulator.
 
 ## Lưu ý
-- Ai đọc được `game/state` đều thấy ai nhận quà gì. Rules chặn gian lận thô nhưng không chặn người cố tình dùng nhiều thiết bị với nhiều tên.
+- Ai đọc được `game/state` đều thấy ai nhận quà gì. Rules chặn gian lận thô (không sửa được phần của người khác, không lấy 2 quà một lần, giới hạn kích thước dữ liệu).
+- **Giới hạn đã biết:** việc chọn quà ngẫu nhiên chạy ở trình duyệt, nên người rành kỹ thuật có thể tự chọn một lọ cụ thể hoặc dùng nhiều tên để lấy nhiều lọ. Muốn chặn hẳn cần Cloud Function (ngoài phạm vi dự án này). Với nhóm bạn bè thì chấp nhận được.
 - Người chơi thứ 6 trở đi sẽ thấy "Đã hết quà".
 - Chơi trên thiết bị khác hoặc xóa dữ liệu trình duyệt thì bốc lại cùng tên sẽ nhận kết quả cũ, nhưng khác tên thì bốc được quà mới.

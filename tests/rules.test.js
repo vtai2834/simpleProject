@@ -1,5 +1,5 @@
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing'
-import { ADMIN_EMAIL, makeEnv, openState, seed } from './helpers.js'
+import { ADMIN_UID, makeEnv, openState, seed } from './helpers.js'
 
 let env
 beforeAll(async () => { env = await makeEnv() })
@@ -10,7 +10,7 @@ beforeEach(async () => {
 })
 
 const guest = () => env.unauthenticatedContext().firestore()
-const admin = () => env.authenticatedContext('admin', { email: ADMIN_EMAIL }).firestore()
+const admin = () => env.authenticatedContext(ADMIN_UID).firestore()
 
 // Trạng thái hợp lệ sau khi bốc 1 quà
 const afterDraw = (over = {}) => ({
@@ -84,7 +84,28 @@ test('admin ghi mọi thứ được', async () => {
   await assertSucceeds(admin().doc('game/state').set(openState()))
 })
 
-test('tài khoản đăng nhập nhưng không phải admin bị chặn', async () => {
-  const other = env.authenticatedContext('u2', { email: 'other@example.com' }).firestore()
+test('tài khoản đăng nhập nhưng không phải admin bị chặn, kể cả mang email admin', async () => {
+  const other = env.authenticatedContext('u2', { email: 'admin@example.com' }).firestore()
   await assertFails(other.doc('prizes/p1').update({ name: 'hack' }))
+})
+
+test('khách ghi lời chúc quá 500 ký tự bị chặn', async () => {
+  const big = afterDraw({
+    assignments: { lan: { name: 'Lan', prizeId: 'p1', wish: 'x'.repeat(501), drawnAt: 1 } },
+  })
+  await assertFails(guest().doc('game/state').update(big))
+})
+
+test('khách ghi tên quá 30 ký tự bị chặn', async () => {
+  const long = afterDraw({
+    assignments: { lan: { name: 'a'.repeat(31), prizeId: 'p1', wish: 'x', drawnAt: 1 } },
+  })
+  await assertFails(guest().doc('game/state').update(long))
+})
+
+test('khách ghi drawnAt không phải số bị chặn', async () => {
+  const bad = afterDraw({
+    assignments: { lan: { name: 'Lan', prizeId: 'p1', wish: 'x', drawnAt: 'now' } },
+  })
+  await assertFails(guest().doc('game/state').update(bad))
 })
