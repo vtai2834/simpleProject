@@ -8,7 +8,7 @@ service cloud.firestore {
     // Còn giữ nguyên placeholder thì không ai có quyền admin (an toàn mặc định).
     function isAdmin() {
       return request.auth != null
-        && request.auth.uid == 'REPLACE_WITH_ADMIN_UID';
+        && request.auth.uid == 'tdLW13E53ERd6SU8ADcdqW23CIG3';
     }
 
     // Người chơi (chưa đăng nhập) chỉ được bốc đúng 1 quà mỗi lần ghi.
