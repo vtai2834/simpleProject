@@ -20,7 +20,9 @@ export default function AdminPanel({ onClose, onLogout }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const notStarted = !game.loading && game.data === null
+  // Lỗi đọc (mất mạng, thiếu quyền) khác với "chưa khởi tạo": không được cho Khởi tạo/Reset
+  const readFailed = Boolean(game.error)
+  const notStarted = !game.loading && !readFailed && game.data === null
   const actionLabel = notStarted ? 'Khởi tạo trò chơi' : 'Reset trò chơi'
 
   const runAction = async () => {
@@ -67,7 +69,9 @@ export default function AdminPanel({ onClose, onLogout }) {
         </div>
 
         <footer className="admin-foot">
-          {!confirming ? (
+          {readFailed ? (
+            <p className="admin-error">Không đọc được dữ liệu trò chơi. Kiểm tra mạng và quyền Firestore rồi tải lại trang.</p>
+          ) : !confirming ? (
             <button className="btn btn--small btn--danger" type="button" onClick={() => setConfirming(true)}>
               {actionLabel}
             </button>

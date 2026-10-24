@@ -23,7 +23,13 @@ export async function initGame() {
   }
   const wishes = await getDoc(doc(db, 'config', 'wishes'))
   if (!wishes.exists()) await setDoc(doc(db, 'config', 'wishes'), { templates: defaultWishes })
-  await resetGame()
+
+  // Chỉ tạo game/state khi chưa có, tuyệt đối không ghi đè game đang chạy
+  const prizeIds = (await getDocs(prizesCol())).docs.map((d) => d.id)
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(stateRef())
+    if (!snap.exists()) tx.set(stateRef(), buildInitialState(prizeIds))
+  })
 }
 
 // Đặt lại: mọi quà hiện có quay về remaining, xóa người chơi và thiết bị

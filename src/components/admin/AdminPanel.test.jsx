@@ -70,3 +70,11 @@ test('bấm Hủy trong hộp xác nhận không reset', () => {
   fireEvent.click(screen.getByRole('button', { name: /hủy/i }))
   expect(resetGame).not.toHaveBeenCalled()
 })
+
+test('lỗi đọc dữ liệu thì không cho Khởi tạo hay Reset và báo lỗi', () => {
+  useGameState.mockReturnValue({ data: null, loading: false, error: new Error('permission-denied') })
+  render(<AdminPanel onClose={() => {}} onLogout={() => {}} />)
+  expect(screen.getByText(/không đọc được dữ liệu/i)).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /khởi tạo/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /reset trò chơi/i })).not.toBeInTheDocument()
+})
