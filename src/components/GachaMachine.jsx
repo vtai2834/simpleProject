@@ -21,6 +21,15 @@ export default function GachaMachine({ phase, onSpinStart, onPhaseDone }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
+  // Kết thúc pha lắc bằng timer, không dựa vào onAnimationComplete: khi bật giảm chuyển động
+  // target không đổi nên framer-motion không bắn sự kiện và game sẽ kẹt.
+  useEffect(() => {
+    if (phase !== 'shaking') return undefined
+    const id = setTimeout(() => onPhaseDone('shaking'), t(1.8) * 1000)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, reduce])
+
   const busy = phase !== 'idle'
   const finish = (p) => () => onPhaseDone(p)
 
@@ -34,7 +43,6 @@ export default function GachaMachine({ phase, onSpinStart, onPhaseDone }) {
             : { x: 0, rotate: 0 }
         }
         transition={{ duration: t(1.8), ease: 'easeInOut' }}
-        onAnimationComplete={phase === 'shaking' ? finish('shaking') : undefined}
       >
         <div className="gacha-dome">
           {DOME.map((c, i) => (
