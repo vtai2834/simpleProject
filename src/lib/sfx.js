@@ -1,4 +1,6 @@
-// Âm thanh tổng hợp bằng WebAudio (không cần file âm thanh). Mặc định TẮT, bật bằng nút 🔊.
+// Âm thanh tổng hợp bằng WebAudio (không cần file âm thanh). Mặc định BẬT, người dùng tắt bằng nút 🔊
+// (lựa chọn được nhớ lại). Trình duyệt chỉ cho phát tiếng sau lần chạm đầu tiên nên gọi unlockAudio()
+// trong sự kiện bấm nút.
 const KEY = 'gacha2010.sound'
 let enabled = null
 let ctx = null
@@ -11,12 +13,17 @@ export function resetSfxForTest() {
 export function getSoundEnabled() {
   if (enabled === null) {
     try {
-      enabled = localStorage.getItem(KEY) === '1'
+      enabled = localStorage.getItem(KEY) !== '0' // chưa từng chọn thì mặc định bật
     } catch {
-      enabled = false
+      enabled = true
     }
   }
   return enabled
+}
+
+// Gọi trong sự kiện bấm nút của người dùng để trình duyệt cho phép phát tiếng về sau
+export function unlockAudio() {
+  if (getSoundEnabled()) getContext()
 }
 
 export function setSoundEnabled(value) {

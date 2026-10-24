@@ -11,6 +11,7 @@ import Sparkles from './components/Sparkles.jsx'
 import SoundToggle from './components/SoundToggle.jsx'
 import { draw } from './lib/draw.js'
 import { getDeviceId } from './lib/deviceId.js'
+import { unlockAudio } from './lib/sfx.js'
 import { useGameState } from './hooks/useGameState.js'
 import { usePrizes } from './hooks/usePrizes.js'
 
@@ -40,6 +41,7 @@ export default function App() {
   const spin = () => {
     if (started.current) return
     started.current = true
+    unlockAudio() // mở khóa âm thanh ngay trong lúc người chơi bấm Quay
     setPhase('shaking')
     draw(name).then(
       (r) => setOutcome(r),
