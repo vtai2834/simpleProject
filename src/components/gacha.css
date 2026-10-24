@@ -1,80 +1,121 @@
 .gacha { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
 
-.gacha-body { width: 100%; max-width: 300px; display: flex; flex-direction: column; align-items: center; }
+.gacha-body { width: 100%; max-width: 320px; display: flex; flex-direction: column; align-items: center; will-change: transform; }
 
+/* ===== Bóng thủy tinh ===== */
 .gacha-dome {
   position: relative;
-  width: 260px;
-  height: 260px;
+  width: 280px;
+  height: 280px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(255,214,228,0.55) 60%, rgba(255,143,179,0.35));
-  border: 6px solid #fff;
-  box-shadow: var(--shadow), inset 0 0 30px rgba(255, 143, 179, 0.35);
+  background: radial-gradient(circle at 50% 60%, rgba(255, 77, 141, 0.22), rgba(20, 5, 35, 0.55) 70%);
+  border: 4px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 0 50px rgba(255, 77, 141, 0.55),
+    0 0 110px rgba(192, 38, 211, 0.4),
+    inset 0 0 50px rgba(255, 255, 255, 0.22),
+    inset 0 -20px 50px rgba(255, 77, 141, 0.25);
   overflow: hidden;
+  transition: box-shadow 0.3s;
 }
-.dome-capsule { position: absolute; }
-.dome-shine { position: absolute; top: 14px; left: 28px; width: 70px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.75); transform: rotate(-30deg); }
+.gacha--shaking .gacha-dome {
+  box-shadow: 0 0 70px rgba(255, 210, 122, 0.85), 0 0 150px rgba(255, 77, 141, 0.7), inset 0 0 60px rgba(255, 255, 255, 0.4);
+}
+.dome-canvas { position: absolute; inset: 0; }
+.dome-glow { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 110%, rgba(255, 210, 122, 0.4), transparent 55%); pointer-events: none; }
+.dome-shine { position: absolute; top: 18px; left: 34px; width: 90px; height: 40px; border-radius: 50%; background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0)); transform: rotate(-32deg); pointer-events: none; }
+.dome-shine--b { top: auto; bottom: 26px; left: auto; right: 30px; width: 40px; height: 16px; opacity: 0.5; transform: rotate(-32deg); }
 
+/* ===== Thân máy ===== */
 .gacha-base {
   position: relative;
-  width: 240px;
-  margin-top: -18px;
-  padding: 22px 18px 20px;
-  border-radius: 32px 32px 40px 40px;
-  background: linear-gradient(180deg, #ff9eb8, var(--wine));
-  box-shadow: var(--shadow);
+  width: 260px;
+  margin-top: -14px;
+  padding: 24px 18px 22px;
+  border-radius: 30px 30px 42px 42px;
+  background: linear-gradient(180deg, #ff7fae 0%, #c0265f 45%, #5b0f3d 100%);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 20px 60px rgba(255, 77, 141, 0.55), inset 0 2px 0 rgba(255, 255, 255, 0.5), inset 0 -10px 24px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
 }
+.base-lights { display: flex; gap: 10px; }
+.base-lights i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 12px var(--gold), 0 0 24px rgba(255, 210, 122, 0.6);
+  animation: ledChase 1.1s ease-in-out infinite;
+}
+@keyframes ledChase { 0%, 100% { opacity: 0.25; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.15); } }
+.gacha--shaking .base-lights i { animation-duration: 0.25s; }
+
 .gacha-slot {
   position: relative;
-  width: 110px;
-  height: 66px;
-  border-radius: 18px;
-  background: rgba(90, 20, 40, 0.65);
-  box-shadow: inset 0 6px 14px rgba(0,0,0,0.4);
+  width: 118px;
+  height: 70px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #14030f, #3a0a28);
+  box-shadow: inset 0 8px 16px rgba(0, 0, 0, 0.7), 0 0 0 3px rgba(255, 255, 255, 0.18);
   display: flex;
   align-items: flex-end;
   justify-content: center;
   overflow: visible;
 }
 .drop-capsule { position: absolute; bottom: 2px; }
+.spark { position: absolute; bottom: 10px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px var(--gold); pointer-events: none; }
 
 .gacha-btn {
+  position: relative;
   font: inherit;
   font-weight: 700;
-  font-size: 20px;
-  padding: 12px 40px;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  padding: 13px 52px;
   border-radius: 999px;
-  border: 3px solid #fff;
-  color: var(--wine);
-  background: #fff7ef;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  color: #5b0f3d;
+  background: linear-gradient(180deg, #fff7d6, var(--gold) 60%, var(--gold2));
   cursor: pointer;
-  box-shadow: 0 6px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 7px 0 #a8641a, 0 14px 30px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 210, 122, 0.55);
+  animation: btnPulse 1.4s ease-in-out infinite;
+  transition: transform 0.1s, box-shadow 0.1s;
 }
-.gacha-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.gacha-btn:active:not(:disabled) { transform: translateY(5px); box-shadow: 0 2px 0 #a8641a, 0 6px 16px rgba(0, 0, 0, 0.4); }
+.gacha-btn:disabled { animation: none; opacity: 0.75; cursor: not-allowed; }
+@keyframes btnPulse { 50% { box-shadow: 0 7px 0 #a8641a, 0 14px 30px rgba(0, 0, 0, 0.4), 0 0 55px rgba(255, 210, 122, 0.95); } }
 
+/* ===== Capsule ===== */
 .capsule { position: relative; }
-.capsule-half { position: absolute; left: 0; }
+.capsule-half { position: absolute; left: 0; overflow: hidden; }
 .capsule-top { top: 0; }
 .capsule-bottom { bottom: 0; }
+.capsule-gloss { position: absolute; left: 16%; top: 16%; width: 28%; height: 20%; border-radius: 50%; background: rgba(255, 255, 255, 0.9); transform: rotate(-28deg); filter: blur(1px); }
 
+/* ===== Cảnh vỡ capsule (toàn màn hình) ===== */
 .crack-stage {
   position: fixed;
   inset: 0;
-  z-index: 5;
+  z-index: 40;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 247, 239, 0.7);
-  backdrop-filter: blur(4px);
+  background: radial-gradient(circle at center, rgba(40, 8, 60, 0.82), rgba(8, 2, 14, 0.95));
+  overflow: hidden;
 }
-.crack-glow {
+.crack-capsule { position: relative; z-index: 3; will-change: transform; }
+.crack-ring { position: absolute; width: 240px; height: 240px; border-radius: 50%; border: 3px solid var(--gold); box-shadow: 0 0 30px var(--gold), inset 0 0 30px rgba(255, 77, 141, 0.6); opacity: 0; }
+.crack-shock { position: absolute; width: 220px; height: 220px; border-radius: 50%; border: 6px solid #fff; box-shadow: 0 0 60px #fff, 0 0 120px var(--rose); opacity: 0; }
+.crack-rays {
   position: absolute;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff, #ffd6e4 55%, transparent 70%);
+  width: 160vmax;
+  height: 160vmax;
+  opacity: 0;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 210, 122, 0.55) 0deg 6deg, transparent 6deg 16deg);
+  -webkit-mask: radial-gradient(circle, #000 0%, transparent 42%);
+  mask: radial-gradient(circle, #000 0%, transparent 42%);
 }
+.crack-flash { position: absolute; inset: 0; z-index: 5; background: #fff; opacity: 0; pointer-events: none; }

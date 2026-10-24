@@ -6,6 +6,9 @@ import GachaMachine from './components/GachaMachine.jsx'
 import PrizeReveal from './components/PrizeReveal.jsx'
 import StatusScreens from './components/StatusScreens.jsx'
 import AdminButton from './components/admin/AdminButton.jsx'
+import AuroraBackground from './components/AuroraBackground.jsx'
+import Sparkles from './components/Sparkles.jsx'
+import SoundToggle from './components/SoundToggle.jsx'
 import { draw } from './lib/draw.js'
 import { getDeviceId } from './lib/deviceId.js'
 import { useGameState } from './hooks/useGameState.js'
@@ -79,7 +82,10 @@ export default function App() {
 
   return (
     <div className="app">
+      <AuroraBackground />
+      <Sparkles />
       <PetalRain />
+      <SoundToggle />
       <AdminButton />
       <main className="stage">
         {closed && <StatusScreens kind="notOpen" />}

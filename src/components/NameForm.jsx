@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { sanitizeDisplayName } from '../lib/normalizeName.js'
+import BloomIcon from './BloomIcon.jsx'
 
 export default function NameForm({ onSubmit }) {
   const [value, setValue] = useState('')
@@ -19,14 +20,7 @@ export default function NameForm({ onSubmit }) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 120, damping: 14 }}
     >
-      <motion.div
-        className="hero-flower"
-        animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.08, 1] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        aria-hidden="true"
-      >
-        🌸
-      </motion.div>
+      <BloomIcon />
       <h1 className="title">Chúc mừng 20/10</h1>
       <p className="subtitle">Gõ tên của bạn để nhận một lọ hoa bất ngờ nhé!</p>
       <input

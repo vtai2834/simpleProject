@@ -21,7 +21,19 @@ test('ở shaking nút Quay bị vô hiệu', () => {
 test('mỗi phase hoạt ảnh kết thúc sẽ gọi onPhaseDone với đúng tên phase', async () => {
   const onPhaseDone = vi.fn()
   render(<GachaMachine phase="dropping" onSpinStart={() => {}} onPhaseDone={onPhaseDone} />)
-  await vi.waitFor(() => expect(onPhaseDone).toHaveBeenCalledWith('dropping'))
+  await vi.waitFor(() => expect(onPhaseDone).toHaveBeenCalledWith('dropping'), { timeout: 3000 })
+})
+
+test('phase cracking hiện cảnh vỡ capsule và báo xong đúng tên phase', async () => {
+  const onPhaseDone = vi.fn()
+  const { container } = render(<GachaMachine phase="cracking" onSpinStart={() => {}} onPhaseDone={onPhaseDone} />)
+  expect(container.querySelector('.crack-stage')).toBeInTheDocument()
+  await vi.waitFor(() => expect(onPhaseDone).toHaveBeenCalledWith('cracking'), { timeout: 4500 })
+}, 6000)
+
+test('ngoài phase cracking không có cảnh vỡ capsule', () => {
+  const { container } = render(<GachaMachine phase="idle" onSpinStart={() => {}} onPhaseDone={() => {}} />)
+  expect(container.querySelector('.crack-stage')).not.toBeInTheDocument()
 })
 
 test('phase done gọi onPhaseDone("done")', async () => {

@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useReducedMotion } from 'framer-motion'
+import { gsap } from 'gsap'
 import Capsule from './Capsule.jsx'
+import CapsuleDome from './CapsuleDome.jsx'
+import { play } from '../lib/sfx.js'
+import { vibrate } from '../lib/haptics.js'
 import './gacha.css'
 
-const COLORS = ['#ff8fb3', '#ffc2d6', '#ffb3c1', '#f9a8d4', '#fda4af', '#ffd6a5', '#ff9eb5']
-// Vị trí tương đối của các capsule trong bóng thủy tinh (phần trăm)
-const DOME = [
-  { x: 14, y: 58 }, { x: 40, y: 66 }, { x: 64, y: 58 }, { x: 26, y: 38 },
-  { x: 52, y: 40 }, { x: 36, y: 16 }, { x: 62, y: 22 },
-]
+// Thời lượng từng phase (giây). Phase kết thúc bằng timer, không dựa vào sự kiện animation,
+// để game không bao giờ bị kẹt (kể cả khi bật giảm chuyển động).
+const DURATION = { shaking: 1.8, dropping: 1.5, cracking: 2.7 }
 
 // Chỉ điều khiển hoạt ảnh theo `phase`; không biết gì về Firebase.
 // phase: idle -> shaking -> dropping -> cracking -> done
@@ -16,106 +17,170 @@ export default function GachaMachine({ phase, onSpinStart, onPhaseDone }) {
   const reduce = useReducedMotion()
   const t = (seconds) => (reduce ? 0.2 : seconds)
 
-  useEffect(() => {
-    if (phase === 'done') onPhaseDone('done')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase])
+  const bodyRef = useRef(null)
+  const slotRef = useRef(null)
+  const dropRef = useRef(null)
+  const crackRef = useRef(null)
+  const [open, setOpen] = useState(false)
 
-  // Kết thúc pha lắc bằng timer, không dựa vào onAnimationComplete: khi bật giảm chuyển động
-  // target không đổi nên framer-motion không bắn sự kiện và game sẽ kẹt.
+  // ---- Kết thúc phase + âm thanh + rung ----
   useEffect(() => {
-    if (phase !== 'shaking') return undefined
-    const id = setTimeout(() => onPhaseDone('shaking'), t(1.8) * 1000)
+    if (phase === 'done') {
+      onPhaseDone('done')
+      return undefined
+    }
+    const ids = []
+    if (phase === 'shaking') {
+      play('spin')
+      vibrate([40, 30, 40, 30, 40])
+    }
+    if (phase === 'dropping') {
+      play('drop')
+      vibrate(60)
+    }
+    if (phase === 'cracking') {
+      play('charge')
+      ids.push(setTimeout(() => {
+        play('crack')
+        vibrate([80, 40, 160])
+      }, t(1.6) * 1000))
+    }
+    if (DURATION[phase]) {
+      ids.push(setTimeout(() => onPhaseDone(phase), t(DURATION[phase]) * 1000))
+    }
+    return () => ids.forEach(clearTimeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, reduce])
+
+  // ---- Capsule bung ra đúng lúc chớp sáng ----
+  useEffect(() => {
+    setOpen(false)
+    if (phase !== 'cracking') return undefined
+    const id = setTimeout(() => setOpen(true), t(1.6) * 1000)
     return () => clearTimeout(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, reduce])
 
+  // ---- Hoạt ảnh GSAP (chỉ để đẹp, không ảnh hưởng luồng) ----
+  useLayoutEffect(() => {
+    if (reduce) return undefined
+    const cleanups = []
+    const ctx = gsap.context(() => {
+      if (phase === 'shaking' && bodyRef.current) {
+        gsap.to(bodyRef.current, {
+          x: 'random(-10,10)',
+          y: 'random(-6,6)',
+          rotation: 'random(-2.4,2.4)',
+          duration: 0.06,
+          repeat: Math.floor(DURATION.shaking / 0.06),
+          yoyo: true,
+          repeatRefresh: true,
+          ease: 'none',
+        })
+      }
+
+      if (phase === 'dropping' && dropRef.current && slotRef.current) {
+        gsap.fromTo(
+          dropRef.current,
+          { y: -130, scale: 0.5, opacity: 0, rotation: -240 },
+          { y: 0, scale: 1, opacity: 1, rotation: 0, duration: 0.7, ease: 'bounce.out' },
+        )
+        // tia lửa tóe ra lúc chạm đáy
+        const slot = slotRef.current
+        const sparks = Array.from({ length: 14 }, () => {
+          const s = document.createElement('span')
+          s.className = 'spark'
+          slot.appendChild(s)
+          return s
+        })
+        cleanups.push(() => sparks.forEach((s) => s.remove()))
+        sparks.forEach((s, i) => {
+          const a = (i / sparks.length) * Math.PI * 2
+          const d = 40 + Math.random() * 50
+          gsap.fromTo(
+            s,
+            { x: 0, y: 0, opacity: 1, scale: 1 },
+            { x: Math.cos(a) * d, y: -Math.abs(Math.sin(a)) * d - 10, opacity: 0, scale: 0, duration: 0.8, delay: 0.5, ease: 'power2.out' },
+          )
+        })
+      }
+    }, bodyRef)
+
+    // Cảnh vỡ capsule: ghi chú thời gian (giây) trên timeline
+    const crackCtx = gsap.context(() => {
+      if (phase !== 'cracking' || !crackRef.current) return
+      const app = document.querySelector('.app')
+      const tl = gsap.timeline()
+
+      tl.fromTo('.crack-capsule', { scale: 0.5, y: 80, opacity: 0 }, { scale: 1.3, y: 0, opacity: 1, duration: 0.5, ease: 'back.out(2.4)' }, 0)
+      // capsule rung ngày càng mạnh và phình to
+      tl.to('.crack-capsule', { x: 'random(-12,12)', y: 'random(-12,12)', rotation: 'random(-9,9)', duration: 0.05, repeat: 22, yoyo: true, repeatRefresh: true, ease: 'none' }, 0.5)
+      tl.to('.crack-capsule', { scale: 2, duration: 1.1, ease: 'power2.in' }, 0.5)
+      // vòng năng lượng co dần vào capsule
+      tl.fromTo('.crack-ring', { scale: 3.2, opacity: 0 }, { scale: 0.5, opacity: 0.9, duration: 0.75, stagger: 0.28, ease: 'power2.in' }, 0.4)
+      // chớp trắng + sóng xung kích + chùm tia
+      tl.to('.crack-flash', { opacity: 1, duration: 0.1 }, 1.6)
+      tl.to('.crack-flash', { opacity: 0, duration: 0.7, ease: 'power2.out' }, 1.72)
+      tl.fromTo('.crack-shock', { scale: 0.2, opacity: 0.95 }, { scale: 4.5, opacity: 0, duration: 1, ease: 'power3.out' }, 1.6)
+      tl.fromTo('.crack-rays', { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }, 1.6)
+      gsap.to('.crack-rays', { rotation: 360, duration: 10, repeat: -1, ease: 'none' })
+      // rung cả màn hình
+      if (app) {
+        tl.to(app, { x: 'random(-3,3)', y: 'random(-3,3)', duration: 0.04, repeat: 30, yoyo: true, repeatRefresh: true, ease: 'none' }, 0.5)
+        tl.to(app, { x: 'random(-11,11)', y: 'random(-11,11)', duration: 0.04, repeat: 9, yoyo: true, repeatRefresh: true, ease: 'none' }, 1.6)
+        tl.set(app, { x: 0, y: 0 }, 2.1)
+        cleanups.push(() => gsap.set(app, { x: 0, y: 0 }))
+      }
+    }, crackRef)
+
+    return () => {
+      ctx.revert()
+      crackCtx.revert()
+      cleanups.forEach((fn) => fn())
+    }
+  }, [phase, reduce])
+
   const busy = phase !== 'idle'
-  const finish = (p) => () => onPhaseDone(p)
 
   return (
-    <div className="gacha">
-      <motion.div
-        className="gacha-body"
-        animate={
-          phase === 'shaking' && !reduce
-            ? { x: [0, -8, 8, -10, 10, -6, 6, 0], rotate: [0, -2, 2, -2, 2, -1, 1, 0] }
-            : { x: 0, rotate: 0 }
-        }
-        transition={{ duration: t(1.8), ease: 'easeInOut' }}
-      >
+    <div className={`gacha gacha--${phase}`}>
+      <div className="gacha-body" ref={bodyRef}>
         <div className="gacha-dome">
-          {DOME.map((c, i) => (
-            <motion.div
-              key={i}
-              className="dome-capsule"
-              style={{ left: `${c.x}%`, top: `${c.y}%` }}
-              animate={
-                phase === 'shaking' && !reduce
-                  ? { y: [0, -26, 6, -18, 0], rotate: [0, 40, -40, 25, 0] }
-                  : { y: 0, rotate: i * 25 }
-              }
-              transition={{ duration: 1.8, delay: i * 0.05 }}
-            >
-              <Capsule color={COLORS[i % COLORS.length]} size={42} />
-            </motion.div>
-          ))}
+          <CapsuleDome phase={phase} />
+          <div className="dome-glow" />
           <div className="dome-shine" />
+          <div className="dome-shine dome-shine--b" />
         </div>
         <div className="gacha-base">
-          <div className="gacha-slot">
+          <div className="base-lights" aria-hidden="true">
+            {Array.from({ length: 7 }, (_, i) => <i key={i} style={{ animationDelay: `${i * 0.14}s` }} />)}
+          </div>
+          <div className="gacha-slot" ref={slotRef}>
             {phase === 'dropping' && (
-              <motion.div
-                className="drop-capsule"
-                initial={{ y: -90, x: 0, opacity: 0, rotate: 0 }}
-                animate={{ y: [-90, 10, -14, 8, 0], opacity: 1, rotate: [0, 160, 340, 380, 360] }}
-                transition={{ duration: t(1.4), ease: 'easeOut' }}
-                onAnimationComplete={finish('dropping')}
-              >
-                <Capsule color="#ff6f9c" size={64} />
-              </motion.div>
+              <div className="drop-capsule" ref={dropRef}>
+                <Capsule color="#ff4d8d" size={62} />
+              </div>
             )}
           </div>
-          <motion.button
-            type="button"
-            className="gacha-btn"
-            disabled={busy}
-            onClick={onSpinStart}
-            animate={phase === 'idle' ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-            transition={{ duration: 1.2, repeat: phase === 'idle' ? Infinity : 0 }}
-          >
+          <button type="button" className="gacha-btn" disabled={busy} onClick={onSpinStart}>
             Quay
-          </motion.button>
+          </button>
         </div>
-      </motion.div>
+      </div>
 
       {phase === 'cracking' && (
-        <div className="crack-stage">
-          <motion.div
-            className="crack-glow"
-            initial={{ scale: 0.2, opacity: 0 }}
-            animate={{ scale: [0.2, 1.6, 2.4], opacity: [0, 0.95, 0] }}
-            transition={{ duration: t(1.6), delay: t(0.8) }}
-          />
-          <motion.div
-            animate={{ x: [0, -6, 6, -6, 6, 0], scale: [1, 1.15, 1.3] }}
-            transition={{ duration: t(0.8) }}
-            onAnimationComplete={finish('cracking')}
-          >
-            <CrackingCapsule />
-          </motion.div>
+        <div className="crack-stage" ref={crackRef}>
+          <div className="crack-rays" />
+          <div className="crack-ring" />
+          <div className="crack-ring" />
+          <div className="crack-ring" />
+          <div className="crack-capsule">
+            <Capsule color="#ff4d8d" size={92} open={open} />
+          </div>
+          <div className="crack-shock" />
+          <div className="crack-flash" />
         </div>
       )}
     </div>
   )
-}
-
-// Capsule rung mạnh rồi tách đôi sau một nhịp
-function CrackingCapsule() {
-  const [open, setOpen] = useState(false)
-  useEffect(() => {
-    const id = setTimeout(() => setOpen(true), 600)
-    return () => clearTimeout(id)
-  }, [])
-  return <Capsule color="#ff6f9c" size={92} open={open} />
 }
