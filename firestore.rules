@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Đổi email này thành VITE_ADMIN_EMAIL của bạn trước khi deploy
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'admin@example.com';
+    }
+
+    // Người chơi (chưa đăng nhập) chỉ được bốc đúng 1 quà mỗi lần ghi.
+    // lastDraw = { key, deviceId, prizeId } giúp rules đối chiếu vì Set không lấy được phần tử.
+    function validDraw() {
+      let before = resource.data;
+      let after = request.resource.data;
+      let d = after.lastDraw;
+      return after.keys().hasOnly(['remaining', 'assignments', 'devices', 'lastDraw'])
+        && after.keys().hasAll(['remaining', 'assignments', 'devices', 'lastDraw'])
+        && d.keys().hasOnly(['key', 'deviceId', 'prizeId'])
+        // assignments: thêm đúng 1 khóa d.key, không sửa khóa cũ
+        && after.assignments.diff(before.assignments).affectedKeys() == [d.key].toSet()
+        && after.assignments.diff(before.assignments).addedKeys() == [d.key].toSet()
+        && after.assignments[d.key].prizeId == d.prizeId
+        && after.assignments[d.key].keys().hasOnly(['name', 'prizeId', 'wish', 'drawnAt'])
+        // devices: thêm đúng 1 khóa d.deviceId trỏ tới d.key
+        && after.devices.diff(before.devices).affectedKeys() == [d.deviceId].toSet()
+        && after.devices.diff(before.devices).addedKeys() == [d.deviceId].toSet()
+        && after.devices[d.deviceId] == d.key
+        // remaining: bỏ đúng 1 quà d.prizeId, không thêm gì mới
+        && before.remaining.size() == after.remaining.size() + 1
+        && before.remaining.toSet().difference(after.remaining.toSet()) == [d.prizeId].toSet()
+        && after.remaining.toSet().difference(before.remaining.toSet()).size() == 0;
+    }
+
+    match /prizes/{prizeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /game/state {
+      allow read: if true;
+      allow write: if isAdmin();
+      allow update: if validDraw();
+    }
+  }
+}

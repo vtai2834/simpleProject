@@ -4,10 +4,9 @@ import { computeDraw } from './computeDraw.js'
 import { getDeviceId } from './deviceId.js'
 
 // Bốc thăm atomic trên game/state. Trả về { status, assignment? }.
-export async function draw(name) {
+export async function draw(name, deviceId = getDeviceId()) {
   const stateRef = doc(db, 'game', 'state')
   const wishesRef = doc(db, 'config', 'wishes')
-  const deviceId = getDeviceId()
 
   return runTransaction(db, async (tx) => {
     const stateSnap = await tx.get(stateRef)
@@ -23,7 +22,13 @@ export async function draw(name) {
 
     const result = computeDraw(state, { name, deviceId, templates, now: Date.now(), rand: Math.random })
     if (result.kind === 'new') {
-      tx.update(stateRef, result.nextState)
+      // lastDraw để Firestore Rules đối chiếu key / thiết bị / quà
+      const lastDraw = {
+        key: result.nextState.devices[deviceId],
+        deviceId,
+        prizeId: result.assignment.prizeId,
+      }
+      tx.update(stateRef, { ...result.nextState, lastDraw })
       return { status: 'new', assignment: result.assignment }
     }
     if (result.kind === 'existing') return { status: 'existing', assignment: result.assignment }

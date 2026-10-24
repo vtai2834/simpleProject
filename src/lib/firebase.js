@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 
 const env = import.meta.env
@@ -16,3 +16,6 @@ const app = initializeApp({
 
 export const db = getFirestore(app)
 export const auth = getAuth(app)
+
+// Chỉ dùng khi chạy test với Firestore Emulator
+if (env.VITE_USE_EMULATOR === 'true') connectFirestoreEmulator(db, '127.0.0.1', 8080)
