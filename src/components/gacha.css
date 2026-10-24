@@ -1,0 +1,80 @@
+.gacha { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
+
+.gacha-body { width: 100%; max-width: 300px; display: flex; flex-direction: column; align-items: center; }
+
+.gacha-dome {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(255,214,228,0.55) 60%, rgba(255,143,179,0.35));
+  border: 6px solid #fff;
+  box-shadow: var(--shadow), inset 0 0 30px rgba(255, 143, 179, 0.35);
+  overflow: hidden;
+}
+.dome-capsule { position: absolute; }
+.dome-shine { position: absolute; top: 14px; left: 28px; width: 70px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.75); transform: rotate(-30deg); }
+
+.gacha-base {
+  position: relative;
+  width: 240px;
+  margin-top: -18px;
+  padding: 22px 18px 20px;
+  border-radius: 32px 32px 40px 40px;
+  background: linear-gradient(180deg, #ff9eb8, var(--wine));
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.gacha-slot {
+  position: relative;
+  width: 110px;
+  height: 66px;
+  border-radius: 18px;
+  background: rgba(90, 20, 40, 0.65);
+  box-shadow: inset 0 6px 14px rgba(0,0,0,0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: visible;
+}
+.drop-capsule { position: absolute; bottom: 2px; }
+
+.gacha-btn {
+  font: inherit;
+  font-weight: 700;
+  font-size: 20px;
+  padding: 12px 40px;
+  border-radius: 999px;
+  border: 3px solid #fff;
+  color: var(--wine);
+  background: #fff7ef;
+  cursor: pointer;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.2);
+}
+.gacha-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.capsule { position: relative; }
+.capsule-half { position: absolute; left: 0; }
+.capsule-top { top: 0; }
+.capsule-bottom { bottom: 0; }
+
+.crack-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 247, 239, 0.7);
+  backdrop-filter: blur(4px);
+}
+.crack-glow {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff, #ffd6e4 55%, transparent 70%);
+}
