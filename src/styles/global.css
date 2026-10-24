@@ -116,3 +116,21 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .petal { animation: none; top: auto; opacity: 0.4; }
 }
+
+/* Màn kết quả */
+.reveal { gap: 12px; }
+.prize-frame {
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff, var(--pink));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 6px solid #fff;
+  box-shadow: var(--shadow);
+}
+.prize-img { width: 100%; height: 100%; object-fit: cover; }
+.prize-placeholder { font-size: 96px; }
+.wish { margin: 4px 0 0; font-size: 1.1rem; line-height: 1.6; color: var(--wine); }
